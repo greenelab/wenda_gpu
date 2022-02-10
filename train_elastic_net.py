@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-p", "--prefix", default="handl", help="Dataset identifier used to name subfolders.")
+parser.add_argument("-p", "--prefix", help="Dataset identifier used to name subfolders.")
 parser.add_argument("-s", "--splits", default=10, help="Number of splits, minimum 3.")
 parser.add_argument("--separator", default="\t", help="Separator used in input data files.")
 parser.add_argument("--horvath", action="store_true", help="Run Horvath transformation for age labels")

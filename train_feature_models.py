@@ -13,7 +13,7 @@ import torch
 import utils
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-p', '--prefix', default="handl", help="Dataset identifier used to name subfolders.")
+parser.add_argument('-p', '--prefix', help="Dataset identifier used to name subfolders.")
 parser.add_argument('-s', '--start', type=int, default=0, help="What feature number to start training on. This is needed for batch training.")
 parser.add_argument('-r', '--range', type=int, default=100, help="How many feature models to train. This is needed for batch training.")
 parser.add_argument('--separator', default="\t", help="Separator used in input data files.")
