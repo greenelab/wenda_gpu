@@ -53,9 +53,13 @@ conf_dir = os.path.join("confidences", args.prefix)
 os.makedirs(conf_dir, exist_ok=True)
 
 first_model = args.start
+total_features = source_matrix.shape[1]
 
 for i in range(args.range):
+    # Prevent out of range error if start + range > total number of features
     feature_number = first_model + i
+    if feature_number >= total_features:
+        break
     try:
 
         # If confidences have already been calculated, skip feature
