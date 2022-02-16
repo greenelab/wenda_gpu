@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This is designed to be a one-click way to run wenda. Users who want more control (e.g. for scheduling jobs on a cluster) can use this script as a guide: run train_feature_models.py in small batches until all feature models have been trained, and then run train_elastic_net.py.
+# This is designed to be a one-click way to run wenda. Be sure to check all parameters in the "Parameters to Edit" section before running. Users who want more control (e.g. for scheduling jobs on a cluster) can use this script as a guide; run train_feature_models.py in small batches until all feature models have been trained, and then run train_elastic_net.py.
 
 
 ### PARAMETERS TO EDIT
@@ -9,15 +9,15 @@ prefix="original" #This should be changed to a specific, meaningful identifier f
 batch_size=100 #How many feature models to train in one batch. For small datasets (i.e. few number of samples), this number can be raised without risk of memory flow errors, but very large datasets may require a number <100.
 horvath=0  #Transformation used for age prediction tasks. This value should be 0 except in this specific use case.
 logistic=0 #This value should be 1 for logistic net regression (binary label data) and 0 for elastic net regression (continuous label data).
-#TODO: decide if I want to add in a delimiter parameter or just make users have their data be tab-delimited
-
+delimiter="\t" #Field separator for input and output files.
 
 # PATH INFORMATION. Paths are relative to the wenda_gpu root directory. These parameters should only need to be modified if the user wants to use data from or store output in another location.
 data_path="data" #Location of input data (i.e. a single repository with source_data.tsv, target_data.tsv, and source_y.tsv)
 feature_model_path="feature_models" #Where feature model .pth files will be written to
 confidence_path="confidences" #Where confidence scores for each feature model will be written to
-elastic_net_path="output" #Where model predictions and TODO maybe parameters will be written to
-#TODO: decide if I want them to be able to store elastic net parameters
+elastic_net_path="output" #Where model predictions will be written to
+
+### END PARAMETERS TO EDIT
 
 
 ### CODE
@@ -40,8 +40,11 @@ batches=$(( $source_features / $batch_size ))
 for (( i=0; i<=$batches; i++))
 do
 	start=$(( $i * $batch_size ))
-	echo "python3 train_feature_models.py -p ${prefix} -s ${start} -r ${batch_size}"
-	python3 train_feature_models.py -p ${prefix} -s ${start} -r ${batch_size}
+	stop=$(( $start + $batch_size - 1 ))
+	echo "Training models ${start} to ${stop}..."
+	python3 train_feature_models.py -p ${prefix} -s ${start} -r ${batch_size} -d ${delimiter} \
+	       	--data_path ${data_path} --feature_model_path ${feature_model_path} \
+		--confidence_path ${confidence_path}
 done
 
 # Confirm all feature models have been trained and confidence scores generated
@@ -60,11 +63,14 @@ fi
 
 # Once all feature models are trained, run elastic net
 if [ horvath ]; then
-	python3 train_elastic_net.py -p ${prefix} --horvath
+	python3 train_elastic_net.py -p ${prefix} -d ${delimiter} --data_path ${data_path} \
+	       --confidence_path ${confidence_path} --elastic_net_path ${elastic_net_path} --horvath
 elif [ logistic ]; then
-	python3 train_elastic_net.py -p ${prefix} --logistic
+	python3 train_elastic_net.py -p ${prefix} -d ${delimiter} --data_path ${data_path} \
+		--confidence_path ${confidence_path} --elastic_net_path ${elastic_net_path} --logistic
 else
-	python3 train_elastic_net.py -p ${prefix}
+	python3 train_elastic_net.py -p ${prefix} -d ${delimiter} --data_path ${data_path} \
+		--confidence_path ${confidence_path} --elastic_net_path ${elastic_net_path}
 fi
 
 end=$SECONDS

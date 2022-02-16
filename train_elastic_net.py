@@ -14,7 +14,10 @@ import pandas as pd
 parser = argparse.ArgumentParser()
 parser.add_argument("-p", "--prefix", help="Dataset identifier used to name subfolders.")
 parser.add_argument("-s", "--splits", default=10, help="Number of splits, minimum 3.")
-parser.add_argument("--separator", default="\t", help="Separator used in input data files.")
+parser.add_argument("-d", "--delimiter", default="\t", help="Separator used in input data files.")
+parser.add_argument("--data_path", default="data", help="Location of input data.")
+parser.add_argument("--confidence_path", default="confidences", help="Where confidence scores for each model will be written to.")
+parser.add_argument("--elastic_net_path", default="output", help="Where model predictions will be written to.")
 parser.add_argument("--horvath", action="store_true", help="Run Horvath transformation for age labels")
 parser.add_argument("--logistic", action="store_true",help="For binary data, create logistic net model instead of elastic net")
 args = parser.parse_args()
@@ -41,9 +44,9 @@ if os.path.isfile(confidence_file) is False:
 
     confidences = np.concatenate(models, axis=1)
     np.savetxt("data/%s/confidences.tsv" % args.prefix, confidences,
-               delimiter="\t", fmt="%.5f")
+               delimiter=args.delimiter, fmt="%.5f")
 else:
-    confidences = pd.read_csv(confidence_file, sep="\t", header=None)
+    confidences = pd.read_csv(confidence_file, sep=args.delimiter, header=None)
     confidences = np.asfortranarray(confidences)
 scores = np.mean(confidences, axis=0)
 
@@ -52,11 +55,11 @@ scores = np.mean(confidences, axis=0)
 data_dir = os.path.join("data", args.prefix)
 
 source_file = os.path.join(data_dir, "source_data.tsv")
-source_table = pd.read_csv(source_file, sep="\t", header=None)
+source_table = pd.read_csv(source_file, sep=args.delimiter, header=None)
 source_matrix = np.asfortranarray(source_table.values)
 
 target_file = os.path.join(data_dir, "target_data.tsv")
-target_table = pd.read_csv(target_file, sep="\t", header=None)
+target_table = pd.read_csv(target_file, sep=args.delimiter, header=None)
 target_matrix = np.asfortranarray(target_table.values)
 
 
