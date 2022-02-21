@@ -7,7 +7,7 @@
 # DATASET-SPECIFIC INFORMATION. Change prefix to desired dataset identifier and confirm all other settings are as desired
 prefix="original" #This should be changed to a specific, meaningful identifier for the dataset and classification problem.
 batch_size=100 #How many feature models to train in one batch. For small datasets (i.e. few number of samples), this number can be raised without risk of memory flow errors, but very large datasets may require a number <100.
-horvath=0  #Transformation used for age prediction tasks. This value should be 0 except in this specific use case.
+horvath=0  #Transformation used for age prediction tasks. This value should be 0 except in this specific use case, when it should be 1.
 logistic=0 #This value should be 1 for logistic net regression (binary label data) and 0 for elastic net regression (continuous label data).
 delimiter="\t" #Field separator for input and output files.
 
@@ -21,6 +21,13 @@ elastic_net_path="output" #Where model predictions will be written to
 
 
 ### CODE
+cd "$(dirname "$0")"
+
+mkdir -p $data_path
+mkdir -p $feature_model_path
+mkdir -p $confidence_path
+mkdir -p $elastic_net_path
+
 start=$SECONDS
 
 # Get number of columns
