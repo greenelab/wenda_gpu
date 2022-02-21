@@ -13,10 +13,13 @@ import torch
 import utils
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-p', '--prefix', help="Dataset identifier used to name subfolders.")
-parser.add_argument('-s', '--start', type=int, default=0, help="What feature number to start training on. This is needed for batch training.")
-parser.add_argument('-r', '--range', type=int, default=100, help="How many feature models to train. This is needed for batch training.")
-parser.add_argument('--separator', default="\t", help="Separator used in input data files.")
+parser.add_argument("-p", "--prefix", help="Dataset identifier used to name subfolders.")
+parser.add_argument("-s", "--start", type=int, default=0, help="What feature number to start training on. This is needed for batch training.")
+parser.add_argument("-r", "--range", type=int, default=100, help="How many feature models to train. This is needed for batch training.")
+parser.add_argument("-d", "--delimiter", default="\t", help="Field delimiter used in input data files.")
+parser.add_argument("--data_path", default="data", help="Location of input data.")
+parser.add_argument("--feature_model_path", default="feature_models", help="Where feature model .pth files will be written to.")
+parser.add_argument("--confidence_path", default="confidences", help="Where confidence scores for each model will be written to.")
 args = parser.parse_args()
 
 # Set torch to run with float32 instead of float64, which exponentially
@@ -26,11 +29,11 @@ device = 'cuda'
 
 # Load data
 source_file = os.path.join("data", args.prefix, "source_data.tsv")
-source_table = pd.read_csv(source_file, sep=args.separator, header=None)
+source_table = pd.read_csv(source_file, sep=args.delimiter, header=None)
 source_matrix = np.asfortranarray(source_table.values)
 
 target_file = os.path.join("data", args.prefix, "target_data.tsv")
-target_table = pd.read_csv(target_file, sep=args.separator, header=None)
+target_table = pd.read_csv(target_file, sep=args.delimiter, header=None)
 target_matrix = np.asfortranarray(target_table.values)
 
 # Normalize based on source data, with some noise to avoid dividing by 0
@@ -53,9 +56,13 @@ conf_dir = os.path.join("confidences", args.prefix)
 os.makedirs(conf_dir, exist_ok=True)
 
 first_model = args.start
+total_features = source_matrix.shape[1]
 
 for i in range(args.range):
+    # Prevent out of range error if start + range > total number of features
     feature_number = first_model + i
+    if feature_number >= total_features:
+        break
     try:
 
         # If confidences have already been calculated, skip feature
