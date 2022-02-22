@@ -28,8 +28,6 @@ mkdir -p $feature_model_path
 mkdir -p $confidence_path
 mkdir -p $elastic_net_path
 
-start=$SECONDS
-
 # Get number of columns
 source_features=`awk -F"\t" '{print NF;exit}' $data_path/$prefix/source_data.tsv`
 target_features=`awk -F"\t" '{print NF;exit}' $data_path/$prefix/target_data.tsv`
