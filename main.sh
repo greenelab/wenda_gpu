@@ -42,9 +42,14 @@ else
 	echo "Preparing to train models for ${source_features} features..."
 fi
 
-# Train feature models in batches
+# Calculate number of batches to run
 batches=$(( $source_features / $batch_size ))
-for (( i=0; i<=$batches; i++))
+if [ $(( $source_features % $batch_size)) != "0" ]; then
+	batches=$((batches + 1))
+fi
+
+# Train feature models in batches
+for (( i=0; i<$batches; i++))
 do
 	start=$(( $i * $batch_size ))
 	stop=$(( $start + $batch_size - 1 ))
@@ -81,5 +86,4 @@ else
 fi
 
 end=$SECONDS
-duration=$(( end - start ))
-echo "Wenda complete. Time to run: $duration"
+echo "Wenda complete. Time to run (seconds): $end"
