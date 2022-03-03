@@ -79,7 +79,7 @@ print(normed_source_matrix.shape)
 
 # Load source data labels
 y_file = os.path.join(data_dir, "source_y.tsv")
-y_table = pd.read_csv(y_file)
+y_table = pd.read_csv(y_file, header=None)
 y_matrix = np.asfortranarray(y_table)
 
 if args.horvath:
