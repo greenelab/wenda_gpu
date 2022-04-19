@@ -1,7 +1,10 @@
 # wenda_gpu
 
-Domain adaptation allows for development of predictive models even in cases with limited or unlabeled sample data.
+Domain adaptation allows for development of predictive models even in cases with limited or unlabeled sample data, by developing predictors for the data of interest (target data) using labeled data from a similar distribution (source data).
 This repo is a fast implementation of one domain adaptation method, weighted elastic net domain adaptation, or wenda.
+It leverages the complex interactions between biological features (such as genes) to optimize a model’s predictive power on both source and target datasets. 
+
+Example usage of this software and results can be found here: (https://github.com/greenelab/wenda_gpu_paper).
 The original paper on wenda can be found here: (https://academic.oup.com/bioinformatics/article/35/14/i154/5529259).
 
 ## Setup
