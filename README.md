@@ -16,7 +16,7 @@ conda activate wenda_gpu_paper
 ```
 
 ## Usage
-The wenda_gpu software runs in two major steps, one GPU-dependent one not.
+The wenda_gpu software runs in two major steps, one GPU-dependent and one not.
 
 The first step, training feature models on the source data and generating confidence scores on the target data, is run in batches on the GPU.
 This can be done manually using `train_feature_models.py` and specifying a batch size and starting location, but we recommend using `main.sh` for ease of use.
