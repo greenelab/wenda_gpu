@@ -1,4 +1,4 @@
-# wenda_gpu
+# wenda_gpu: fast domain adaptation for genomic data
 
 Domain adaptation allows for development of predictive models even in cases with limited or unlabeled sample data, by developing predictors for the data of interest (target data) using labeled data from a similar distribution (source data).
 This repo is a fast implementation of one domain adaptation method, weighted elastic net domain adaptation, or wenda.
