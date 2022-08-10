@@ -45,7 +45,7 @@ def train_feature_models(source_matrix,
                          confidence_path="confidences",
                          dtype=torch.float32,
                          device='cuda',
-                         verbose=False):
+                         verbose=True):
     """ Train Gaussian process models for each feature in the source data, and
     generate confidence scores based on how well they predict the target data.
     Arguments:
