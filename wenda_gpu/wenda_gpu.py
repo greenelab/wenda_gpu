@@ -3,18 +3,23 @@ Author: Ariel Hippen
 Date Created: 4 August 2022
 
 For each feature, wenda trains a model on the rest of the source data
-(ie all other features), and tests how well that model is able to predict
-the observed feature values in the target data.
+(ie all other features), and generates a confidence score based on how
+well that model is able to predict the observed feature values in the
+target data. These confidence values are used as weighted penalties for
+the ultimate elastic (or logistic) net task, training the source data
+on the source labels. This script will train several models, a vanilla
+(unweighted) elastic net and with a variety of penalization amounts
+based on confidence score.
 """
 
 import os
 import gc
+import glmnet
 import gpytorch
 import numpy as np
 import pandas as pd
 import torch
-import utils
-
+from wenda_gpu import utils
 
 def load_data(prefix="original",
               data_path="data",
@@ -63,7 +68,7 @@ def train_feature_models(source_matrix,
         Nothing, writes to files in feature_model_path and confidence_path
     """
     # Set up directories for storing feature models and confidences
-    feature_dir, confidence_dir = _organize_directory_structure(prefix=prefix,
+    feature_dir, confidence_dir = utils.organize_directory_structure(prefix=prefix,
             feature_model_path=feature_model_path, confidence_path=confidence_path)
     # Calculate number of batches to run
     source_features = source_matrix.shape[1]
@@ -80,32 +85,6 @@ def train_feature_models(source_matrix,
                 start=start, batch_size=batch_size, dtype=dtype, device=device)
         gc.collect()
         torch.cuda.empty_cache()
-
-
-def _organize_directory_structure(prefix="original",
-                                  feature_model_path="feature_models",
-                                  confidence_path="confidences"):
-    """ Create feature model and confidence directories if they don't exist
-    and creates dataset-specific subdirectories if they don't exist.
-    Arguments:
-        prefix:             a dataset identifier used to name subfolders.
-        feature_model_path: the directory to store feature models, with the var
-                            'prefix' being used as a subdirectory.
-        confidence_path:    the directory to store feature model confidence
-                            scores, with prefix used as a subdirectory.
-    Returns:
-        feature_dir:        the dataset-specific subdirectory for feature models.
-        confidence_dir:     the dataset-specific subdirectory for confidence scores.
-    """
-    os.makedirs(feature_model_path, exist_ok=True)
-    feature_dir = os.path.join(feature_model_path, prefix)
-    os.makedirs(feature_dir, exist_ok=True)
-
-    os.makedirs(confidence_path, exist_ok=True)
-    confidence_dir = os.path.join(confidence_path, prefix)
-    os.makedirs(confidence_dir, exist_ok=True)
-
-    return feature_dir, confidence_dir
 
 
 def normalize_data(raw_source_matrix,
@@ -226,3 +205,112 @@ def _train_feature_model_batch(source_matrix,
         except gpytorch.utils.errors.NotPSDError:
             confidences = np.zeros(test_x.shape[0])
             np.savetxt(conf_file, confidences, fmt='%i')
+
+
+def load_labels(prefix="original",
+                data_path="data",
+                horvath=False):
+    """ Load source data labels. This should be a file called
+    'source_y.tsv' with one column, where each row is a sample.
+    Arguments:
+        prefix:       a dataset identifier used to name subfolders.
+        data_path:    the directory where data is stored, with the var
+                      'prefix' being used as a subdirectory.
+        horvath:      run horvath transformation on age labels.
+    Returns:
+        label_matrix: an array of source labels (transformed if needed)
+    """
+    data_dir = os.path.join(data_path, prefix)
+    label_file = os.path.join(data_dir, "source_y.tsv")
+    label_table = pd.read_csv(label_file, header=None)
+    label_matrix = np.asfortranarray(label_table)
+
+    if horvath:
+        label_matrix = utils.age_transform(label_matrix)
+
+    return label_matrix
+
+
+def train_elastic_net(source_matrix,
+                      source_labels,
+                      target_matrix,
+                      prefix = "original",
+                      confidence_path = "confidences",
+                      elastic_net_path = "output",
+                      alpha = 0.8,
+                      n_splits = 10,
+                      k_values = [0, 1, 2, 3, 4, 6, 8, 10, 14, 18, 25, 35],
+                      logistic = False,
+                      horvath = False,
+                      export_coef = False,
+                      verbose = True):
+    """ Trains several elastic nets on the source data and labels across a
+    range of hyperparameters.
+    Arguments:
+        source_matrix:    the source data. Expects a numpy fortran array. Should
+                          have been z-scored using normalizeData().
+        source_labels:    the source labels. Expects a numpy fortran array.
+        target_matrix:    the target data. Expects a numpy fortran array. Should
+                          have been z-scored using normalizeData().
+        prefix:           a dataset identifier used to name subfolders.
+        confidence_path:  the directory to store feature model confidence
+                          scores, with prefix used as a subdirectory.
+        elastic_net_path: the directory to store elastic net results, with
+                          prefix used as a subdirectory.
+        alpha:            weighting of lasso vs. ridge regression,
+                          should be between 0 and 1.
+        n_splits:         number of cross-validation splits, minimum 3.
+        k_values:         weight of penalization to assign to low confidence
+                          scores. This should be a range of non-negative
+                          values, with 0 being a regular elastic net.
+        logistic:         for binary data, create a logistic net.
+        horvath:          run horvath transformation on age labels.
+        export_coef:      write model coefficients to file called weights.tsv.
+        verbose:          prints status message when each value of k is tested.
+    Returns:
+       Nothing, writes to files in elastic_net_path
+    """
+    scores = utils.aggregate_confidences(source_matrix, prefix, confidence_path)
+
+    elastic_net_dir = os.path.join(elastic_net_path, prefix)
+
+    for k in k_values:
+        k_output_dir = os.path.join(elastic_net_dir, "k_{0:02d}".format(k))
+        os.makedirs(k_output_dir, exist_ok=True)
+
+        if verbose:
+            print("k_wnet =", k, flush=True)
+        if logistic:
+            model = glmnet.LogitNet(alpha=alpha, n_splits=n_splits)
+        else:
+            model = glmnet.ElasticNet(alpha=alpha, n_splits=n_splits)
+
+        # Train model on source data and labels
+        if k == 0:
+            model = model.fit(source_matrix, source_labels)
+        else:
+            weights = utils.confidence_to_weights(scores, k)
+            model = model.fit(source_matrix, source_labels, relative_penalties=weights)
+
+        if export_coef:
+            weight_file = os.path.join(k_output_dir, "weights.txt")
+            np.savetxt(weight_file, model.coef_)
+
+        # Predict on target data
+        try:
+            target_y = model.predict(target_matrix)
+        except ValueError:
+            continue
+
+        # Save predicted target labels to file
+        target_file = os.path.join(k_output_dir, "target_predictions.txt")
+        if horvath:
+            age_y = utils.age_back_transform(target_y)
+            np.savetxt(target_file, age_y)
+        else:
+            np.savetxt(target_file, target_y, fmt="%i")
+        # For logistic regression, save probability of each label
+        if logistic:
+            prob = model.predict_proba(target_matrix)
+            prob_file = os.path.join(k_output_dir, "target_probabilities.txt")
+            np.savetxt(prob_file, prob, fmt="%.5e")

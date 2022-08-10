@@ -2,12 +2,40 @@
 Date Created: 4 August 2022
 """
 
-import gpytorch
+import os
 import torch
+import gpytorch
 import numpy as np
+import pandas as pd
 
 from scipy.stats import norm
-from LBFGS import FullBatchLBFGS
+from wenda_gpu.LBFGS import FullBatchLBFGS
+
+
+def organize_directory_structure(prefix="original",
+                                  feature_model_path="feature_models",
+                                  confidence_path="confidences"):
+    """ Create feature model and confidence directories if they don't exist
+    and creates dataset-specific subdirectories if they don't exist.
+    Arguments:
+        prefix:             a dataset identifier used to name subfolders.
+        feature_model_path: the directory to store feature models, with the var
+                            'prefix' being used as a subdirectory.
+        confidence_path:    the directory to store feature model confidence
+                            scores, with prefix used as a subdirectory.
+    Returns:
+        feature_dir:        the dataset-specific subdirectory for feature models.
+        confidence_dir:     the dataset-specific subdirectory for confidence scores.
+    """
+    os.makedirs(feature_model_path, exist_ok=True)
+    feature_dir = os.path.join(feature_model_path, prefix)
+    os.makedirs(feature_dir, exist_ok=True)
+
+    os.makedirs(confidence_path, exist_ok=True)
+    confidence_dir = os.path.join(confidence_path, prefix)
+    os.makedirs(confidence_dir, exist_ok=True)
+
+    return feature_dir, confidence_dir
 
 
 class ExactGPModel(gpytorch.models.ExactGP):
@@ -69,6 +97,52 @@ def train_model_bfgs(model, likelihood, x, y, learning_rate,
             break
 
     return model, likelihood
+
+
+def aggregate_confidences(source_matrix,
+                           prefix="original",
+                           confidence_path="confidences"):
+    """ The confidence scores for each feature model are stored in
+    a separate file. This script concatenates them into one file.
+    Arguments:
+        source_matrix:   the normalized source data.
+        prefix:          a dataset identifier used to name subfolders.
+        confidence_path: directory used to store feature model confidence
+                         scores, with the var prefix as a subdirectory.
+    Returns:
+        scores:          a vector of mean confidence scores in target data
+                         for each feature model.
+    """
+    # Check if there's an aggregated confidence scores file,
+    # and if not create it
+    confidence_dir = os.path.join(confidence_path, prefix)
+    confidence_file = os.path.join(confidence_dir, "confidences.tsv")
+    if os.path.isfile(confidence_file) is False:
+
+        # Check all confidence score files have been run
+        filenumber = len(os.listdir(confidence_dir))
+        expected_files = source_matrix.shape[1]
+        if filenumber != expected_files:
+            raise Exception("Expected %d confidence files and found %d. \
+                    Confirm all feature models have been run." % (expected_files, filenumber))
+
+        # Concatenate into one confidence file and save
+        features = []
+        for i in range(filenumber):
+            filename = os.path.join(confidence_dir, "model_%d_confidence.txt" % i)
+            feature_scores = np.loadtxt(filename)
+            feature_scores.shape = (feature_scores.shape[0], 1)
+            features.append(feature_scores)
+
+        confidences = np.concatenate(features, axis=1)
+        np.savetxt(confidence_file, confidences,
+                   delimiter="\t", fmt="%.5f")
+    else:
+        confidences = pd.read_csv(confidence_file, sep="\t", header=None)
+        confidences = np.asfortranarray(confidences)
+
+    scores = np.mean(confidences, axis=0)
+    return scores
 
 
 def confidence_to_weights(x, k):
