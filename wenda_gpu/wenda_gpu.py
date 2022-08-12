@@ -234,16 +234,16 @@ def load_labels(prefix="original",
 def train_elastic_net(source_matrix,
                       source_labels,
                       target_matrix,
-                      prefix = "original",
-                      confidence_path = "confidences",
-                      elastic_net_path = "output",
-                      alpha = 0.8,
-                      n_splits = 10,
-                      k_values = [0, 1, 2, 3, 4, 6, 8, 10, 14, 18, 25, 35],
-                      logistic = False,
-                      horvath = False,
-                      export_coef = False,
-                      verbose = True):
+                      prefix="original",
+                      confidence_path="confidences",
+                      elastic_net_path="output",
+                      alpha=0.8,
+                      n_splits=10,
+                      k_values=[0, 1, 2, 3, 4, 6, 8, 10, 14, 18, 25, 35],
+                      logistic=False,
+                      horvath=False,
+                      export_coef=False,
+                      verbose=True):
     """ Trains several elastic nets on the source data and labels across a
     range of hyperparameters.
     Arguments:
