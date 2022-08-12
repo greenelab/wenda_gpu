@@ -185,7 +185,7 @@ def age_transform(age, adult_age=20):
     in the first few years of age than in later life.
     Arguments:
         age: a vector of sample ages in years.
-        adult_age: age at which to not apply log transformation
+        adult_age: age cutoff above which to not apply log transformation
     Returns:
         horvath: a vector of Horvath-transformed ages.
     """
