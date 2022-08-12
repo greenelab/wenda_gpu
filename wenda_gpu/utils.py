@@ -198,7 +198,7 @@ def age_back_transform(trans_age, adult_age=20):
     """ Reverses the Horvath transformation for age data.
     Arguments:
         trans_age: vector of Horvath-transformed ages.
-        adult_age: age at which log transformation isn't applied.
+        adult_age: age cutoff above which which log transformation isn't applied.
     Returns:
         age: a vector of sample ages in years.
     """
