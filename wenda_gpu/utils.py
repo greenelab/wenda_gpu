@@ -100,8 +100,8 @@ def train_model_bfgs(model, likelihood, x, y, learning_rate,
 
 
 def aggregate_confidences(source_matrix,
-                           prefix="original",
-                           confidence_path="confidences"):
+                          prefix="original",
+                          confidence_path="confidences"):
     """ The confidence scores for each feature model are stored in
     a separate file. This script concatenates them into one file.
     Arguments:
