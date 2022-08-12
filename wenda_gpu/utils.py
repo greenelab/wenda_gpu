@@ -13,8 +13,8 @@ from wenda_gpu.LBFGS import FullBatchLBFGS
 
 
 def organize_directory_structure(prefix="original",
-                                  feature_model_path="feature_models",
-                                  confidence_path="confidences"):
+                                 feature_model_path="feature_models",
+                                 confidence_path="confidences"):
     """ Create feature model and confidence directories if they don't exist
     and creates dataset-specific subdirectories if they don't exist.
     Arguments:
