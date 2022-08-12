@@ -180,9 +180,9 @@ def get_confidence(model, likelihood, x, y):
 
 
 def age_transform(age, adult_age=20):
-    """ Implements the Horvath transformation for age data,
-    which helps adjust for greater biological changes
-    in the first few years of age than in later life.
+    """ Implements the Horvath transformation (DOI 10.1186/gb-2013-14-10-r115)
+    for age data, which helps adjust for greater methylation changes in the 
+    first few years of age than in later life.
     Arguments:
         age: a vector of sample ages in years.
         adult_age: age cutoff above which to not apply log transformation
