@@ -9,7 +9,7 @@ README = (HERE / "README.md").read_text()
 
 setup(
     name="wenda_gpu",
-    version="0.7.1",
+    version="0.7.3",
     description="Fast domain adaptation for genomic data",
     long_description=README,
     long_description_content_type="text/markdown",
