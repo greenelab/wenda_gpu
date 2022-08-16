@@ -18,7 +18,7 @@ Alternatively, you can install the latest development version directly from this
 pip install git+https://github.com/greenelab/wenda_gpu
 ```
 
-## Basic usage
+## Usage
 
 The most basic usage of wenda is this:
 
@@ -54,7 +54,7 @@ working_directory
     │   └── prefix
     │       ├── confidences.tsv
     │       ├── model_0_confidence.txt
-    │       ├── model_99_confidence.txt
+    │       ├── model_1_confidence.txt
     │       └── ...   
     └── output
         └── prefix
