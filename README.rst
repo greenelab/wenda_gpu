@@ -45,7 +45,7 @@ The most basic usage of wenda is this:
    wg.train_elastic_net(source_data_normed, source_y, target_data_normed, prefix="sample")
 
 For a step-by-step tutorial in running wenda_gpu, consult
-wenda_gpu_quick_usage.ipynb in the example folder.
+(https://github.com/greenelab/wenda_gpu/example/wenda_gpu_quick_usage.ipynb).
 
 Directory structure
 -------------------
