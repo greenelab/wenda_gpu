@@ -36,7 +36,7 @@ For a step-by-step tutorial in running wenda_gpu, consult wenda_gpu_quick_usage.
 
 ## Directory structure
 
-By default, wenda_gpu creates the following structure in your working directory:
+By default, wenda_gpu implements the following structure in your working directory:
 
 ```
 working_directory
@@ -67,7 +67,9 @@ working_directory
             └── ...
 ```
 "prefix" is intended to be a unique identifier for your dataset, which allows you to run wenda_gpu on multiple datasets and have them nested within the same directory structure.
-If you want intermediate files and output in a different location than inside your working directory, you can specify your own paths using the path arguments in the related functions, e.g.
+
+The user will need to create the files under the `data` directory, containing the feature information for both source and target datasets and the labels for the source data. Data can be loaded from a different source, for an example consult wenda_gpu_quick_usage.ipynb.
+The files under the `feature_models`, `confidences`, and `output` directories will be automatically created by wenda_gpu. If you want intermediate files and output in a different location than inside your working directory, you can specify your own paths using the path arguments in the related functions, e.g.
 
 ```
 wg.train_feature_models(source_data_normed, target_data_normed, prefix="sample", feature_model_path="~/wenda_gpu_run/feature_models", confidence_path="~/wenda_gpu_run/confidences")
