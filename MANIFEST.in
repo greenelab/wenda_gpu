@@ -1,0 +1,4 @@
+# MANIFEST.in
+
+include example/wenda_gpu_quick_usage.ipynb
+recursive-include example/data *.tsv
